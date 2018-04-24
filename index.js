@@ -8,10 +8,10 @@ var port = process.env.PORT || 3000;
 var fs = require("fs");
 
 const logToFile = content => {
-    var d = new Date();
+    /* var d = new Date();
     var appendMessage =
         "[" + d.getHours() + ":" + d.getMinutes() + "] " + content + "\n";
-    fs.appendFile("log.txt", appendMessage, () => {});
+    fs.appendFile("log.txt", appendMessage, () => {}); */
 };
 
 server.listen(port, function() {
