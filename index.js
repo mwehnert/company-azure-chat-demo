@@ -5,9 +5,17 @@ var path = require('path');
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
+var fs = require('fs');
+
+const logToFile = (content) => {
+    var d = new Date();
+    var appendMessage = "[" + d.getHours() + ":" + d.getMinutes() + "] " + content + "\n";
+    fs.appendFile('log.txt', appendMessage, () => {});
+};
 
 server.listen(port, function() {
     console.log('Server listening at port %d', port);
+    fs.truncate('log.txt', 0, function(){console.log('done')})
 });
 
 // Routing
@@ -27,6 +35,7 @@ io.on('connection', function(socket) {
             username: socket.username,
             message: data
         });
+         logToFile(socket.username + ": " + data); 
     });
 
     // when the client emits 'add user', this listens and executes
@@ -45,6 +54,7 @@ io.on('connection', function(socket) {
             username: socket.username,
             numUsers: numUsers
         });
+        logToFile(socket.username + " joined")
     });
 
     // when the client emits 'typing', we broadcast it to others
@@ -71,6 +81,7 @@ io.on('connection', function(socket) {
                 username: socket.username,
                 numUsers: numUsers
             });
+            logToFile(socket.username + " disconnected");
         }
     });
 });
