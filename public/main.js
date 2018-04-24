@@ -48,6 +48,8 @@ $(function() {
 
             // Tell the server your username
             socket.emit('add user', username);
+
+
         }
     }
 
@@ -280,6 +282,12 @@ $(function() {
     // Whenever the server emits 'login', log the login message
     socket.on('login', function(data) {
         connected = true;
+
+        debugger;
+        data.messages.forEach(message => {
+            addChatMessage({ "message": message.message, "username": message.username });
+        });
+
         // Display the welcome message
         var message = "Welcome to Socket.IO Chat – ";
         log(message, {

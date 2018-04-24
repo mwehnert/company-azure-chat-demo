@@ -13,6 +13,46 @@ server.listen(port, function() {
 // Routing
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Storage
+//// Require Mongoose
+var mongoose = require('mongoose');
+
+// connect
+mongoose.connect('mongodb://conet-azure-chat-mongodb.documents.azure.com:10255/chatlog?ssl=true', {
+        auth: {
+            user: 'conet-azure-chat-mongodb',
+            password: '2dZQ9OHrN9lVRHunhudCB0HvXEHluIw8rjLMgRCnTtm93NiqvddT1Wia3WoU0xhF7RIhNzQW8tVSIactORVKmg=='
+        }
+    })
+    .then(() => console.log('connection successful'))
+    .catch((err) => console.error(err));
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+    console.log("Connected to DB");
+});
+
+//Define a schema
+var Schema = mongoose.Schema;
+
+var MessageModelSchema = new Schema({
+    message: String,
+    date: Date,
+    user: String
+});
+
+// Compile model from schema
+var MessageModel = mongoose.model('MessageModel', MessageModelSchema);
+
+
+// HOW TO ADD MESSAGE TO DB
+
+/* MessageModel.create({ message: 'testmessage', date: Date.now(), user: 'testname' }, function(err, awesome_instance) {
+    if (err) return handleError(err);
+    // saved!
+}); */
+
 // Chatroom
 
 var numUsers = 0;
@@ -37,14 +77,37 @@ io.on('connection', function(socket) {
         socket.username = username;
         ++numUsers;
         addedUser = true;
-        socket.emit('login', {
-            numUsers: numUsers
+
+        // chat history needs to be attached
+
+        var messageStore = new Array();
+        MessageModel.find({}, (err, messages) => {
+            console.log(messages);
+            messages.forEach((element) => {
+                console.log(element);
+                messageStore.push({ "username": element.user, "message": element.message });
+            });
+
+            console.log(messageStore);
+
+            socket.emit('login', {
+                numUsers: numUsers,
+                messages: messageStore
+            });
+
         });
+
+
+
+
         // echo globally (all clients) that a person has connected
         socket.broadcast.emit('user joined', {
             username: socket.username,
-            numUsers: numUsers
+            numUsers: numUsers,
+            messages: messageStore
         });
+
+
     });
 
     // when the client emits 'typing', we broadcast it to others
