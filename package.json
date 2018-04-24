@@ -1,0 +1,17 @@
+{
+    "name": "conet-azure-chat",
+    "version": "0.0.0",
+    "description": "A simple chat client using socket.io, node.js which is hosted on azure",
+    "main": "index.js",
+    "author": "Grant Timmerman",
+    "private": true,
+    "license": "BSD",
+    "dependencies": {
+        "engine.io": "^3.2.0",
+        "express": "4.13.4",
+        "socket.io": "^2.1.0"
+    },
+    "scripts": {
+        "start": "node index.js"
+    }
+}
