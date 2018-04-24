@@ -67,6 +67,12 @@ io.on('connection', function(socket) {
             username: socket.username,
             message: data
         });
+
+        MessageModel.create({ message: data, date: Date.now(), user: socket.username }, function(err, awesome_instance) {
+            if (err) return handleError(err);
+            // saved!
+        });
+
     });
 
     // when the client emits 'add user', this listens and executes
