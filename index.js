@@ -19,7 +19,7 @@ server.listen(port, function() {
   fs.exists("log.txt", e => {
     if (e) {
       fs.truncate("log.txt", 0, () => {
-        console.log("Prepared log file and started loggin");
+        console.log("Prepared log file and started logging");
       });
     }
   });
