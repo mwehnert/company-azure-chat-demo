@@ -88,8 +88,8 @@ io.on("connection", function(socket) {
             // saved!
         });
 
+        logToFile(socket.username + ": " + data);
     });
-    logToFile(socket.username + ": " + data);
 
 
     // when the client emits 'add user', this listens and executes
