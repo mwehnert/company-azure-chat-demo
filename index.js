@@ -6,6 +6,21 @@ var server = require("http").createServer(app);
 var io = require("socket.io")(server);
 var port = process.env.PORT || 3000;
 var fs = require("fs");
+var SocketAntiSpam = require('socket-anti-spam');
+
+const socketAntiSpam = new SocketAntiSpam({
+    banTime: 30, // Ban time in minutes
+    kickThreshold: 10, // User gets kicked after this many spam score
+    kickTimesBeforeBan: 2, // User gets banned after this many kicks
+    banning: true, // Uses temp IP banning after kickTimesBeforeBan
+    io: io, // Bind the socket.io variable
+})
+
+// Call functions with created reference 'socketAntiSpam'
+socketAntiSpam.event.on('ban', data => {
+    // Do stuff
+    console.log(data);
+})
 
 const logToFile = content => {
     /* var d = new Date();
