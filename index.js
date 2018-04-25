@@ -196,6 +196,17 @@ var MessageModel = mongoose.model('MessageModel', MessageModelSchema);
 
 var numUsers = 0;
 
+function updateUserlist() {
+    var users = [];
+    var sockets = io.sockets.clients().sockets;
+    for (var property in sockets) {
+        if (sockets.hasOwnProperty(property) && sockets[property].username) {
+            users.push(sockets[property].username);
+        }
+    }
+    io.sockets.emit("update_userlist", { 'users': users });
+}
+
 io.on("connection", function(socket) {
     var addedUser = false;
 
@@ -218,7 +229,6 @@ io.on("connection", function(socket) {
         logToFile(socket.username + ": " + data);
     });
 
-
     // when the client emits 'add user', this listens and executes
     socket.on("add user", function(username) {
         if (addedUser) return;
@@ -229,7 +239,6 @@ io.on("connection", function(socket) {
         addedUser = true;
 
         // chat history needs to be attached
-
         var messageStore = new Array();
         MessageModel.find({}, (err, messages) => {
             messages.forEach((element) => {
@@ -248,6 +257,7 @@ io.on("connection", function(socket) {
             numUsers: numUsers,
             messages: messageStore
         });
+        updateUserlist();
         logToFile(socket.username + " joined");
     });
 
@@ -276,6 +286,8 @@ io.on("connection", function(socket) {
                 numUsers: numUsers
             });
             logToFile(socket.username + " disconnected");
+            updateUserlist();
+
         }
     });
 });

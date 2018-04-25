@@ -249,6 +249,17 @@ $(function() {
         return COLORS[index];
     }
 
+    function updateUserlist(users) {
+
+        var userlist$ = $(".online .users");
+
+        userlist$.children().detach();
+
+        $.each(users.users, function(index, username) {
+            userlist$.append("<li>" + username + "</li>");
+        });
+    }
+
     // Keyboard events
 
     $window.keydown(function(event) {
@@ -290,7 +301,6 @@ $(function() {
     socket.on('login', function(data) {
         connected = true;
 
-        debugger;
         data.messages.forEach(message => {
             addChatMessage({ "message": message.message, "username": message.username });
         });
@@ -301,6 +311,7 @@ $(function() {
             prepend: true
         });
         addParticipantsMessage(data);
+        socket.emit("newUser");
     });
 
     // Whenever the server emits 'new message', update the chat body
@@ -348,6 +359,11 @@ $(function() {
 
     socket.on('sentiment computed', function(obj) {
         log(extractSentiment(obj));
+    });
+
+    socket.on('update_userlist', function(users) {
+
+        updateUserlist(users);
     });
 
 });
