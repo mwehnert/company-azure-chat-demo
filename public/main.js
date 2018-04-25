@@ -153,6 +153,13 @@ $(function() {
         }
     }
 
+    function extractSentiment(data) {
+        let username = data.data.username;
+        let message = data.data.documents.documents[0].text;
+        let score = data.response.documents[0].score;
+        return username + "'s Nachricht ist zu " + (score * 100).toFixed(2) + "% positive (Nachricht: '" + message + "')";
+    }
+
     // Adds the visual chat typing message
     function addChatTyping(data) {
         data.typing = true;
@@ -337,6 +344,10 @@ $(function() {
 
     socket.on('reconnect_error', function() {
         log('attempt to reconnect has failed');
+    });
+
+    socket.on('sentiment computed', function(obj) {
+        log(extractSentiment(obj));
     });
 
 });

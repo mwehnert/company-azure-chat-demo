@@ -8,6 +8,115 @@ var port = process.env.PORT || 3000;
 var fs = require("fs");
 var SocketAntiSpam = require('socket-anti-spam');
 
+let https = require('https');
+
+
+
+// **********************************************
+// *** Update or verify the following values. ***
+// **********************************************
+
+// Replace the accessKey string value with your valid access key.
+let accessKey = 'ab0b52e78e5a44f7a5d491f5111bf79a';
+
+// Replace or verify the region.
+
+// You must use the same region in your REST API call as you used to obtain your access keys.
+// For example, if you obtained your access keys from the westus region, replace 
+// "westcentralus" in the URI below with "westus".
+
+// NOTE: Free trial access keys are generated in the westcentralus region, so if you are using
+// a free trial access key, you should not need to change this region.
+let uri = 'westeurope.api.cognitive.microsoft.com';
+let path1 = '/text/analytics/v2.0/languages';
+var mydocuments;
+
+function analyzeMessage(data, username) {
+    mydocuments = {
+        "documents": {
+            "documents": [{ "id": 1, "text": data }]
+        },
+        "username": username
+    };
+    get_language(mydocuments);
+}
+
+let response_handler1 = function(response) {
+    let body = '';
+    response.on('data', function(d) {
+        body += d;
+    });
+    response.on('end', function() {
+        let body_ = JSON.parse(body);
+        let body__ = JSON.stringify(body_, null, '  ');
+        console.log(body__);
+        mydocuments.documents.documents[0].language = body_.iso6391Name;
+        get_sentiments(mydocuments);
+    });
+    response.on('error', function(e) {
+        console.log('Error: ' + e.message);
+        mydocuments = {};
+    });
+};
+
+let response_handler2 = function(response) {
+    let body = '';
+    response.on('data', function(d) {
+        body += d;
+    });
+    response.on('end', function() {
+        let body_ = JSON.parse(body);
+        let body__ = JSON.stringify(body_, null, '  ');
+        console.log(body__);
+        let clients = io.sockets.clients(); // This returns an array with all connected clients
+
+        io.sockets.emit('sentiment computed', { 'data': mydocuments, 'response': body_ });
+
+        mydocuments = {};
+    });
+    response.on('error', function(e) {
+        console.log('Error: ' + e.message);
+
+        mydocuments = {};
+    });
+};
+
+let get_language = function(documents) {
+    let body = JSON.stringify(documents.documents);
+
+    let request_params = {
+        method: 'POST',
+        hostname: uri,
+        path: path1,
+        headers: {
+            'Ocp-Apim-Subscription-Key': accessKey,
+        }
+    };
+
+    let req = https.request(request_params, response_handler1);
+    req.write(body);
+    req.end();
+}
+
+let path2 = '/text/analytics/v2.0/sentiment';
+
+let get_sentiments = function(documents) {
+    let body = JSON.stringify(documents.documents);
+
+    let request_params = {
+        method: 'POST',
+        hostname: uri,
+        path: path2,
+        headers: {
+            'Ocp-Apim-Subscription-Key': accessKey,
+        }
+    };
+
+    let req = https.request(request_params, response_handler2);
+    req.write(body);
+    req.end();
+}
+
 const socketAntiSpam = new SocketAntiSpam({
     banTime: 30, // Ban time in minutes
     kickThreshold: 10, // User gets kicked after this many spam score
@@ -103,6 +212,9 @@ io.on("connection", function(socket) {
             // saved!
         });
 
+        analyzeMessage(data, socket.username);
+
+
         logToFile(socket.username + ": " + data);
     });
 
@@ -120,14 +232,9 @@ io.on("connection", function(socket) {
 
         var messageStore = new Array();
         MessageModel.find({}, (err, messages) => {
-            console.log(messages);
             messages.forEach((element) => {
-                console.log(element);
                 messageStore.push({ "username": element.user, "message": element.message });
             });
-
-            console.log(messageStore);
-
             socket.emit('login', {
                 numUsers: numUsers,
                 messages: messageStore
