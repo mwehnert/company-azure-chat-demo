@@ -9,8 +9,9 @@ var fs = require("fs");
 
 const logToFile = content => {
   var d = new Date();
+  var mins = mins = ('0'+d.getMinutes()).slice(-2);
   var appendMessage =
-    "[" + d.getHours() + ":" + d.getMinutes() + "] " + content + "\n";
+    "[" + d.getHours() + ":" + mins + "] " + content + "\n";
   fs.appendFile("log.txt", appendMessage, () => {});
 };
 
@@ -53,15 +54,22 @@ io.on("connection", function(socket) {
     socket.username = username;
     ++numUsers;
     addedUser = true;
+
+    //get logged data from log file and split lines into seperate strings
+    var data = fs.readFileSync("log.txt", "utf8");
+    var splitted = data.split("\n");
+
     socket.emit("login", {
-      numUsers: numUsers
+      numUsers: numUsers,
+      log: splitted
     });
+    logToFile(socket.username + ": joined");
+
     // echo globally (all clients) that a person has connected
     socket.broadcast.emit("user joined", {
       username: socket.username,
       numUsers: numUsers
     });
-    logToFile(socket.username + " joined");
   });
 
   // when the client emits 'typing', we broadcast it to others
@@ -88,7 +96,7 @@ io.on("connection", function(socket) {
         username: socket.username,
         numUsers: numUsers
       });
-      logToFile(socket.username + " disconnected");
+      logToFile(socket.username + ": disconnected");
     }
   });
 });
